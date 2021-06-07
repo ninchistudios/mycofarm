@@ -1,2 +1,3 @@
 # mycofarm
-Environmental control for the myco farm
+
+Environmental control for indoor farms.

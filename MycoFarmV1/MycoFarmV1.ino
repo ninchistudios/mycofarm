@@ -4,6 +4,7 @@
 #include "DHT.h" // Adafruit Temp & Humidity sensor library
 #include "Adafruit_CCS811.h" // Adafruit CCS811 eCO2/TVOC sensor library
 
+// ### NO NEED TO CHANGE THESE IN PRODUCTION
 const int RELAYPIN1 = 13; // Relay pin
 const int RELAYPIN2 = 12; // Relay pin
 const int RELAYPIN3 = 11; // Relay pin
@@ -13,14 +14,24 @@ const char DHTTYPE = DHT11; // DHT 11
 // const char DHTTYPE = DHT22; // DHT 22  (AM2302), AM2321
 // const char DHTTYPE = DHT21; // DHT 21 (AM2301)
 const int TEMPTUNEF = 32; // Tuning for CO2 sensor temp
+const int IODELAY = 5000; // delay between sensor readings in ms
+// ###
+
+// ### RARELY CHANGED IN PRODUCTION
 const char *TUBTYPE[] = {"Nameko","KingTrumpet","Shiitake","LionsMane","GardenGiant","Other"};
+// ###
+
+// ### POTENTIALLY CHANGE FOR EACH TUB AS CAKES ARE BIRTHED AND GROW PARAMS ARE TUNED
 // choose 1 grow CONFIG: TubType, MinTemp, MaxTemp, MinHumi, MaxHumi, MaxCO2, LightOn, LightOff
 // const int CONFIG[] = {0,13,17,85,95,10000,10,16}; // Nameko
 // const int CONFIG[] = {1,13,17,85,95,10000,10,16}; // King Trumpet
 const int CONFIG[] = {2,13,17,85,95,10000,10,16}; // Shiitake
 // const int CONFIG[] = {3,13,17,85,95,10000,10,16}; // Lions Mane
 // const int CONFIG[] = {4,13,17,85,95,10000,10,16}; // Garden Giant
-const String TUBID = "A"; // ensure this matches the tub
+const String TUBID = "A"; // ensure this matches the tub that you're deploying to
+// ###
+
+// ### PRODUCTION CODE BELOW HERE
 
 Adafruit_CCS811 ccs;
 DHT dht(DHTPIN, DHTTYPE);
@@ -35,21 +46,19 @@ void setup() {
   // serial comm
   Serial.begin(9600);
   Serial.println(F("MycoFarm Init"));
-  // init the DHT sensor
+  // init the sensors
   dht.begin();
   if(!ccs.begin()){
     Serial.println("FATAL: Failed to start CO2 sensor - check wiring");
     while(1);
   }
-  // Wait for the sensor to be ready
+  // Wait for the sensors to be ready
   while(!ccs.available());
   ccs.setTempOffset(TEMPTUNEF);
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  // Wait a few seconds between measurements.
-  delay(2000);
+  delay(IODELAY);
 
   // Identifying Info
   Serial.print("|Tub:" + TUBID + "|Type:" + TUBTYPE[CONFIG[0]]);

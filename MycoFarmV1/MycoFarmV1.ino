@@ -10,11 +10,13 @@ const int RELAYPIN2 = 12; // Relay pin
 const int RELAYPIN3 = 11; // Relay pin
 const int RELAYPIN4 = 10; // Relay pin
 const int DHTPIN = 8; // Digital pin connected to the DHT sensor
+const int FANPWMPIN = 6; // PWM pin to control a 3-pin FAE case fan
 const char DHTTYPE = DHT11; // DHT 11
 // const char DHTTYPE = DHT22; // DHT 22  (AM2302), AM2321
 // const char DHTTYPE = DHT21; // DHT 21 (AM2301)
 const int TEMPTUNEF = 32; // Tuning for CO2 sensor temp
 const int IODELAY = 5000; // delay between sensor readings in ms
+int FANPWM = 0; // value 0-255 to send to FAE Fan PWM
 // ###
 
 // ### RARELY CHANGED IN PRODUCTION
@@ -43,9 +45,13 @@ void setup() {
   pinMode(RELAYPIN2, OUTPUT);
   pinMode(RELAYPIN3, OUTPUT);
   pinMode(RELAYPIN4, OUTPUT);
+  pinMode(FANPWMPIN, OUTPUT);
   // serial comm
   Serial.begin(9600);
   Serial.println(F("MycoFarm Init"));
+  //analogWrite(FANPWMPIN,255);
+  //delay(1000);
+  analogWrite(FANPWMPIN,0);
   // init the sensors
   dht.begin();
   if(!ccs.begin()){
@@ -59,7 +65,7 @@ void setup() {
 
 void loop() {
   delay(IODELAY);
-
+  
   // Identifying Info
   Serial.print("|Tub:" + TUBID + "|Type:" + TUBTYPE[CONFIG[0]]);
 
@@ -90,6 +96,16 @@ void loop() {
     Serial.print(F("|Temp:"));
     Serial.print(t);
   }
+
+  // Oscillate the fan for now
+  //FANPWM += 32;
+  //if (FANPWM > 255) {
+  //  FANPWM = 0;
+  //}
+  //FANPWM = (FANPWM == 0) ? 255 : 0;
+  analogWrite(FANPWMPIN,FANPWM);
+  Serial.print(F("|FAEFan:"));
+  Serial.print(FANPWM);
 
   // Fin
   Serial.println(F("|"));

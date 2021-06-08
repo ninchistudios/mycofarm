@@ -18,13 +18,13 @@ const int IODELAY = 5000; // delay between sensor readings in ms
 // ###
 
 // ### RARELY CHANGED IN PRODUCTION
-const char *TUBTYPE[] = {"Nameko","KingTrumpet","Shiitake","LionsMane","GardenGiant","Other"};
+const char *TUBTYPE[] = {"Nameko","KingOyster","Shiitake","LionsMane","GardenGiant","Other"};
 // ###
 
 // ### POTENTIALLY CHANGE FOR EACH TUB AS CAKES ARE BIRTHED AND GROW PARAMS ARE TUNED
 // choose 1 grow CONFIG: TubType, MinTemp, MaxTemp, MinHumi, MaxHumi, MaxCO2, LightOn, LightOff
 // const int CONFIG[] = {0,13,17,85,95,10000,10,16}; // Nameko
-// const int CONFIG[] = {1,13,17,85,95,10000,10,16}; // King Trumpet
+// const int CONFIG[] = {1,13,17,85,95,10000,10,16}; // King Oyster
 const int CONFIG[] = {2,13,17,85,95,10000,10,16}; // Shiitake
 // const int CONFIG[] = {3,13,17,85,95,10000,10,16}; // Lions Mane
 // const int CONFIG[] = {4,13,17,85,95,10000,10,16}; // Garden Giant

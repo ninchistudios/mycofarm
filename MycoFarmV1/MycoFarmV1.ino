@@ -1,5 +1,6 @@
 /*
-  You can delete the blink code obv
+  MycoFarm
+  https://github.com/ninchistudios/mycofarm
 */
 #include "DHT.h" // Adafruit Temp & Humidity sensor library
 #include "Adafruit_CCS811.h" // Adafruit CCS811 eCO2/TVOC sensor library

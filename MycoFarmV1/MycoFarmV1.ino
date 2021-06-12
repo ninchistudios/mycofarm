@@ -6,10 +6,12 @@
 #include "Adafruit_CCS811.h" // Adafruit CCS811 eCO2/TVOC sensor library
 
 // ### NO NEED TO CHANGE THESE IN PRODUCTION
-const int RELAYPIN1 = 13; // Relay pin
-const int RELAYPIN2 = 12; // Relay pin
-const int RELAYPIN3 = 11; // Relay pin
-const int RELAYPIN4 = 10; // Relay pin
+const int RELAYPIN1 = 12; // Relay pin IN1
+const int RELAYPIN2 = 11; // Relay pin IN2 - 24VAC irrigation
+const int RELAYPIN3 = 10; // Relay pin
+const int RELAYPIN4 = 9; // Relay pin
+const bool ENABLERELAY = false; // do we run the relay code
+bool RELAYON = false; // used for debugging to flip relay state
 const int DHTPIN = 8; // Digital pin connected to the DHT sensor
 const int FANPWMPIN = 6; // PWM pin to control a 3-pin FAE case fan
 const char DHTTYPE = DHT11; // DHT 11
@@ -18,6 +20,7 @@ const char DHTTYPE = DHT11; // DHT 11
 const int TEMPTUNEF = 32; // Tuning for CO2 sensor temp
 const int IODELAY = 5000; // delay between sensor readings in ms
 int FANPWM = 0; // value 0-255 to send to FAE Fan PWM
+const bool ENABLEFAN = false; // do we run the FAE fan code
 // ###
 
 // ### RARELY CHANGED IN PRODUCTION
@@ -53,6 +56,10 @@ void setup() {
   //analogWrite(FANPWMPIN,255);
   //delay(1000);
   analogWrite(FANPWMPIN,0);
+  digitalWrite(RELAYPIN1, LOW);
+  digitalWrite(RELAYPIN2, LOW);
+  digitalWrite(RELAYPIN3, LOW);
+  digitalWrite(RELAYPIN4, LOW);
   // init the sensors
   dht.begin();
   if(!ccs.begin()){
@@ -98,15 +105,22 @@ void loop() {
     Serial.print(t);
   }
 
-  // Oscillate the fan for now
-  //FANPWM += 32;
-  //if (FANPWM > 255) {
-  //  FANPWM = 0;
-  //}
-  //FANPWM = (FANPWM == 0) ? 255 : 0;
-  analogWrite(FANPWMPIN,FANPWM);
+  if (ENABLEFAN) {
+    // Oscillate the fan for now
+    FANPWM = (FANPWM == 0) ? 255 : 0;
+    analogWrite(FANPWMPIN,FANPWM);
+  }
   Serial.print(F("|FAEFan:"));
   Serial.print(FANPWM);
+
+  if (ENABLERELAY) {
+    // Oscillate the valve for now
+    // irrigation
+    RELAYON = !RELAYON;
+    digitalWrite(RELAYPIN2, RELAYON);
+  }
+  Serial.print(F("|RELAYON:"));
+  Serial.print(RELAYON);
 
   // Fin
   Serial.println(F("|"));

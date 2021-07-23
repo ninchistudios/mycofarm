@@ -41,7 +41,7 @@ void setup() {
   
   // serial comm
   Serial.begin(9600);
-  Serial.println(F("MycoFarm TripleStirrer Init"));
+  Serial.println(F("MycoFarm TripleStirrer v1 Init"));
   //analogWrite(FANPWMPIN,255);
   //delay(1000);
   digitalWrite(A0,LOW);

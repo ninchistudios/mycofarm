@@ -4,74 +4,62 @@
 */
 
 // ### NO NEED TO CHANGE THESE IN PRODUCTION
-const int BUTTON1PIN = 2;
-const int BUTTON2PIN = 7;
-const int BUTTON3PIN = 8;
-// const int LED1PIN = ; // A0
-// const int LED2PIN = ; // A1
-// const int LED3PIN = ; // A2
-const int FAN1PIN = 3; // PWM
-const int FAN2PIN = 5; // PWM
-const int FAN3PIN = 6; // PWM
+const int BUTTONPIN[] = {2,7,8}; // Digital
+const int LEDPIN[] = {A0,A1,A2}; // Analog
+const int FANPIN[] = {3,5,6}; // PWM
 const int IODELAY = 1000;
-int LEDVALUE = 255; // value 0-255
-int LEDTEST = 1;
+const int CHANNELS = 3;
+const int STATE_TIMER_WAIT = 0;
+const int STATE_TIMER_ACTIVE = 1;
+const int STATE_OVERRIDE_ON = 2;
+const int MAXVAL = 255;
+const unsigned long DEBOUNCEDELAY = 50; 
+// vars
+int BUTTONSTATE[] = {0,0,0};
+int BUTTON1STATELAST[] = {0,0,0};
+int LEDSTATE[] = {LOW,LOW,LOW};
+int CHANNELSTATE[] = {STATE_TIMER_WAIT,STATE_TIMER_WAIT,STATE_TIMER_WAIT};
+unsigned long LASTDEBOUNCE[] = {0,0,0};
+
 // ###
 
 // ### RARELY CHANGED IN PRODUCTION
 // ###
 
-// ### POTENTIALLY CHANGE FOR EACH TUB AS CAKES ARE BIRTHED AND GROW PARAMS ARE TUNED
-// ###
-
 // ### PRODUCTION CODE BELOW HERE
 
-// the setup function runs once when you press reset or power the board
 void setup() {
-  // initialize digital I/O
-  pinMode(A0, OUTPUT); // A0
-  pinMode(A1, OUTPUT); // A1
-  pinMode(A2, OUTPUT); // A2
-  pinMode(BUTTON1PIN, INPUT); // D2
-  pinMode(BUTTON2PIN, INPUT); // D7
-  pinMode(BUTTON3PIN, INPUT); // D8
-  pinMode(FAN1PIN, OUTPUT); // PWM3
-  pinMode(FAN2PIN, OUTPUT); // PWM5
-  pinMode(FAN3PIN, OUTPUT); // PWM6
+  
+  // initialize I/O
+  for (int i=0; i<CHANNELS; i++) {
+    pinMode(LEDPIN[i], OUTPUT);
+    pinMode(BUTTONPIN[i], INPUT);
+    pinMode(FANPIN[i], OUTPUT);
+    digitalWrite(LEDPIN[i],LOW);
+    analogWrite(FANPIN[i],0);
+  }
   
   // serial comm
   Serial.begin(9600);
   Serial.println(F("MycoFarm TripleStirrer v1 Init"));
-  //analogWrite(FANPWMPIN,255);
-  //delay(1000);
-  digitalWrite(A0,LOW);
-  digitalWrite(A1,LOW);
-  digitalWrite(A2,LOW);
-  analogWrite(FAN1PIN,0);
-  analogWrite(FAN2PIN,0);
-  analogWrite(FAN3PIN,0);
+
+  // delay for ethernet?
+    delay(1000);
   
 }
 
-void loop() {
-  delay(IODELAY);
-  if (LEDTEST == 1) {
-    digitalWrite(A0, HIGH);
-    digitalWrite(A1, LOW);
-    digitalWrite(A2, LOW);
-    LEDTEST = 2;
-  } else if (LEDTEST == 2) {
-    digitalWrite(A0, LOW);
-    digitalWrite(A1, HIGH);
-    digitalWrite(A2, LOW);
-    LEDTEST = 3;
-  } else if (LEDTEST == 3) {
-    digitalWrite(A0, LOW);
-    digitalWrite(A1, LOW);
-    digitalWrite(A2, HIGH);
-    LEDTEST = 1;
-  } else {
-    LEDTEST = 1;
-  }
+void loop() { 
+ 
+}
 
+void setLeds() {
+  for (int i=0; i<CHANNELS; i++) {
+    digitalWrite(LEDPIN[i],LEDSTATE[i]);
+  }
+}
+
+void checkButtons() {
+  for (int i=0; i<CHANNELS; i++) {
+    
+  }
 }

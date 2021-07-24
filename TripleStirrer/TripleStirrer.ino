@@ -4,6 +4,7 @@
 */
 
 // ### NO NEED TO CHANGE THESE IN PRODUCTION
+const bool DEBUG = false;
 const int BUTTONPIN[] = {2,7,8}; // Digital
 const int LEDPIN[] = {A0,A1,A2}; // Analog
 const int FANPIN[] = {3,5,6}; // PWM
@@ -56,7 +57,7 @@ void loop() {
   setLeds();
   checkButtons();
   setLedStates();
-  doDebug();
+  if (DEBUG) doDebug();
 }
 
 void setLedStates() {
@@ -80,11 +81,8 @@ void checkButtons() {
     }
     if ((millis() - LASTDEBOUNCE[i]) > DEBOUNCEDELAY) { // we'll only enter here if the state has been stable for > DEBOUNCEDELAY
       if (reading != BUTTONSTATE[i]) {
+        if (DEBUG) doDebugButtonPress(i);
         BUTTONSTATE[i] = reading;
-        Serial.print(F("Button "));
-        Serial.print(i);
-        Serial.print(F(" state "));
-        Serial.println(BUTTONSTATE[i]);
         if (BUTTONSTATE[i] == LOW) {
           CHANNELSTATE[i] = (CHANNELSTATE[i] == STATE_OVERRIDE_ON) ? STATE_TIMER_WAIT : STATE_OVERRIDE_ON;
         }
@@ -92,6 +90,13 @@ void checkButtons() {
     }
     BUTTONSTATELAST[i] = reading;
   }
+}
+
+void doDebugButtonPress(int channel) {
+    Serial.print(F("Button "));
+    Serial.print(channel);
+    Serial.print(F(" state "));
+    Serial.println(BUTTONSTATE[channel]);
 }
 
 void doDebug() {

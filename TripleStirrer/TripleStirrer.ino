@@ -13,7 +13,7 @@ const int STATE_TIMER_WAIT = 0;
 const int STATE_TIMER_ACTIVE = 1;
 const int STATE_OVERRIDE_ON = 2;
 const int MAXVAL = 255;
-const unsigned long DEBOUNCEDELAY = 50; 
+const unsigned long DEBOUNCEDELAY = 150; 
 const unsigned long DEBUGDELAY = 10000;
 // vars
 int BUTTONSTATE[] = {HIGH,HIGH,HIGH};
@@ -74,24 +74,23 @@ void setLeds() {
 
 void checkButtons() {
   for (int i=0; i<CHANNELS; i++) {
-    int reading = !digitalRead(BUTTONPIN[i]); // inverted for HIGH default
+    int reading = digitalRead(BUTTONPIN[i]); // inverted for HIGH default?
     if (reading != BUTTONSTATELAST[i]) { // is there a button state change?
       LASTDEBOUNCE[i] = millis(); // reset the debounce timer
     }
     if ((millis() - LASTDEBOUNCE[i]) > DEBOUNCEDELAY) { // we'll only enter here if the state has been stable for > DEBOUNCEDELAY
-      Serial.print(F("press "));
-      Serial.println(i);
       if (reading != BUTTONSTATE[i]) {
         BUTTONSTATE[i] = reading;
         Serial.print(F("Button "));
         Serial.print(i);
-        Serial.print(F("state "));
+        Serial.print(F(" state "));
         Serial.println(BUTTONSTATE[i]);
         if (BUTTONSTATE[i] == LOW) {
           CHANNELSTATE[i] = (CHANNELSTATE[i] == STATE_OVERRIDE_ON) ? STATE_TIMER_WAIT : STATE_OVERRIDE_ON;
         }
       }
     }
+    BUTTONSTATELAST[i] = reading;
   }
 }
 

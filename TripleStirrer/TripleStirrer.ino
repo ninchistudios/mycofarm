@@ -7,7 +7,7 @@
 const bool DEBUG = false;
 const int BUTTONPIN[] = {2,7,8}; // Digital
 const int LEDPIN[] = {A0,A1,A2}; // Analog
-const int FANPIN[] = {3,5,6}; // PWM
+const int SPINPIN[] = {3,5,6}; // PWM
 const int IODELAY = 1000;
 const int CHANNELS = 3;
 const int STATE_TIMER_WAIT = 0;
@@ -16,12 +16,15 @@ const int STATE_OVERRIDE_ON = 2;
 const int MAXVAL = 255;
 const unsigned long DEBOUNCEDELAY = 150; 
 const unsigned long DEBUGDELAY = 10000;
+const unsigned long BLINKINTERVAL = 500;
 // vars
 int BUTTONSTATE[] = {HIGH,HIGH,HIGH};
 int BUTTONSTATELAST[] = {HIGH,HIGH,HIGH};
 int LEDSTATE[] = {LOW,LOW,LOW};
+int SPINSTATE[] = {0,0,0};
 int CHANNELSTATE[] = {STATE_TIMER_WAIT,STATE_TIMER_WAIT,STATE_TIMER_WAIT};
 unsigned long LASTDEBOUNCE[] = {0,0,0};
+unsigned long LASTBLINKON[] = {0,0,0};
 unsigned long LASTDEBUG = 0;
 
 // ###
@@ -39,31 +42,59 @@ void setup() {
     // enables the 5v pullup resistor so we don't need it externally
     // note that a press will go LOW - open read HIGH
     pinMode(BUTTONPIN[i], INPUT_PULLUP); 
-    pinMode(FANPIN[i], OUTPUT);
+    pinMode(SPINPIN[i], OUTPUT);
     digitalWrite(LEDPIN[i],LOW);
-    analogWrite(FANPIN[i],0);
+    analogWrite(SPINPIN[i],0);
   }
   
-  // serial comm
-  Serial.begin(9600);
-  Serial.println(F("MycoFarm TripleStirrer v1 Init"));
+  if (DEBUG) {
+    // serial comm
+    Serial.begin(9600);
+    Serial.println(F("MycoFarm TripleStirrer v1 Init"));
+  }
 
   // delay for ethernet?
-    delay(1000);
+  delay(1000);
   
 }
 
 void loop() { 
   setLeds();
   checkButtons();
+  setSpinners();
   setLedStates();
   if (DEBUG) doDebug();
 }
 
+void setSpinners() {
+  for (int i=0; i<CHANNELS; i++) {
+    if ((CHANNELSTATE[i] == STATE_OVERRIDE_ON) || (CHANNELSTATE[i] == STATE_TIMER_ACTIVE)) {
+      SPINSTATE[i] = MAXVAL;
+    } else {
+      SPINSTATE[i] = 0;
+    }
+    analogWrite(SPINPIN[i],SPINSTATE[i]);
+  }
+}
+
 void setLedStates() {
   for (int i=0; i<CHANNELS; i++) {
-    // simple for now, we'll do blinking later
-    LEDSTATE[i] = (CHANNELSTATE[i] == STATE_OVERRIDE_ON) ? HIGH : LOW;
+    switch (CHANNELSTATE[i]) {
+      case STATE_OVERRIDE_ON:
+        LEDSTATE[i] = HIGH;
+        break;
+      case STATE_TIMER_WAIT:
+        LEDSTATE[i] = LOW;
+        break;
+      case STATE_TIMER_ACTIVE:
+        LEDSTATE[i] = LOW;
+        // TODO blinking
+        break;
+      default:
+        // should never get here?
+        LEDSTATE[i] = LOW;
+        break;
+    }
   }
 }
 
@@ -75,7 +106,7 @@ void setLeds() {
 
 void checkButtons() {
   for (int i=0; i<CHANNELS; i++) {
-    int reading = digitalRead(BUTTONPIN[i]); // inverted for HIGH default?
+    int reading = digitalRead(BUTTONPIN[i]);
     if (reading != BUTTONSTATELAST[i]) { // is there a button state change?
       LASTDEBOUNCE[i] = millis(); // reset the debounce timer
     }

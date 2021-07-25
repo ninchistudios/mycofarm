@@ -4,6 +4,7 @@
 */
 
 // ### NO NEED TO CHANGE THESE IN PRODUCTION
+// consts
 const bool DEBUG = false;
 const int BUTTONPIN[] = {2,7,8}; // Digital
 const int LEDPIN[] = {A0,A1,A2}; // Analog
@@ -26,10 +27,6 @@ int CHANNELSTATE[] = {STATE_TIMER_WAIT,STATE_TIMER_WAIT,STATE_TIMER_WAIT};
 unsigned long LASTDEBOUNCE[] = {0,0,0};
 unsigned long LASTBLINKON[] = {0,0,0};
 unsigned long LASTDEBUG = 0;
-
-// ###
-
-// ### RARELY CHANGED IN PRODUCTION
 // ###
 
 // ### PRODUCTION CODE BELOW HERE
@@ -43,8 +40,8 @@ void setup() {
     // note that a press will go LOW - open read HIGH
     pinMode(BUTTONPIN[i], INPUT_PULLUP); 
     pinMode(SPINPIN[i], OUTPUT);
-    digitalWrite(LEDPIN[i],LOW);
-    analogWrite(SPINPIN[i],0);
+    digitalWrite(LEDPIN[i],LEDSTATE[i]);
+    analogWrite(SPINPIN[i],SPINSTATE[i]);
   }
   
   if (DEBUG) {
@@ -59,10 +56,9 @@ void setup() {
 }
 
 void loop() { 
-  setLeds();
   checkButtons();
   setSpinners();
-  setLedStates();
+  setLeds();
   if (DEBUG) doDebug();
 }
 
@@ -77,7 +73,7 @@ void setSpinners() {
   }
 }
 
-void setLedStates() {
+void setLeds() {
   for (int i=0; i<CHANNELS; i++) {
     switch (CHANNELSTATE[i]) {
       case STATE_OVERRIDE_ON:
@@ -95,11 +91,6 @@ void setLedStates() {
         LEDSTATE[i] = LOW;
         break;
     }
-  }
-}
-
-void setLeds() {
-  for (int i=0; i<CHANNELS; i++) {
     digitalWrite(LEDPIN[i],LEDSTATE[i]);
   }
 }

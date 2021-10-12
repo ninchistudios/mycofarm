@@ -28,6 +28,16 @@ if __name__ == '__main__':
     while True:
         if ser.in_waiting > 0:
             line = ser.readline().decode('utf-8').rstrip()
-            print(line)
-            aio.append(mtemp.key,24)
-            aio.append(mhumi.key,75)
+            # print(line)
+            pairs = line.split('|')
+            for pair in pairs:
+                # print(pair)
+                if (pair.find('Temp:') > -1):
+                    t = float(pair[5:])
+                    # print(t)
+                    aio.append(mtemp.key,t)
+                if (pair.find('Humi:') > -1):
+                    h = float(pair[5:])
+                    # print(h)
+                    aio.append(mhumi.key,h)
+

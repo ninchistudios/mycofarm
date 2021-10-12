@@ -4,15 +4,17 @@
 */
 #include "DHT.h" // Adafruit Temp & Humidity sensor library
 #include "Adafruit_CCS811.h" // Adafruit CCS811 eCO2/TVOC sensor library
+#include "U8glib.h" // OLED display library
 
 // ### NO NEED TO CHANGE THESE IN PRODUCTION
-const int RELAYPIN1 = 12; // Relay pin IN1
-const int RELAYPIN2 = 11; // Relay pin IN2 - 24VAC irrigation
-const int RELAYPIN3 = 10; // Relay pin
-const int RELAYPIN4 = 9; // Relay pin
+const int RELAYPIN = 12; // Relay pin IN1 - 24VAC irrigation
 bool RELAYON = false; // used for debugging to flip relay state
 const int DHTPIN = 8; // Digital pin connected to the DHT sensor
 const int FANPWMPIN = 6; // PWM pin to control a 3-pin FAE case fan
+const int SCKPIN = 13; // OLED SCK
+const int MOSIPIN = 11; // OLED MOSI
+const int CSPIN = 10; // OLED CS
+const int A0PIN = 9; // OLED A0
 const char DHTTYPE = DHT11; // DHT 11
 // const char DHTTYPE = DHT22; // DHT 22  (AM2302), AM2321
 // const char DHTTYPE = DHT21; // DHT 21 (AM2301)
@@ -21,11 +23,13 @@ const int IODELAY = 5000; // delay between sensor readings in ms
 int FANPWM = 0; // value 0-255 to send to FAE Fan PWM
 const bool ENABLEFAN = false; // do we run the FAE fan code
 const bool ENABLERELAY = false; // do we run the relay code
-const bool ENABLECO2 = false; // do we run the CO2/VOC sensor code
+const bool ENABLECO2 = true; // do we run the CO2/VOC sensor code
+const bool ENABLEDHT = false; // do we run the DHT temp/pressure sensor code
+const bool ENABLEOLED = true; // do we run the OLED display
 // ###
 
 // ### RARELY CHANGED IN PRODUCTION
-const char *TUBTYPE[] = {"Nameko","KingOyster","Shiitake","LionsMane","GardenGiant","General","Reishi"};
+const char *TUBTYPE[] = {"Nameko","KingOyster","Shiitake","LionsMane","GardenGiant","Martha","Reishi"};
 // ###
 
 // ### POTENTIALLY CHANGE FOR EACH TUB AS CAKES ARE BIRTHED AND GROW PARAMS ARE TUNED
@@ -35,23 +39,25 @@ const char *TUBTYPE[] = {"Nameko","KingOyster","Shiitake","LionsMane","GardenGia
 // const int CONFIG[] = {2,13,17,85,95,10000,10,16}; // Shiitake
 // const int CONFIG[] = {3,13,17,85,95,10000,10,16}; // Lions Mane
 // const int CONFIG[] = {4,13,17,85,95,10000,10,16}; // Garden Giant
-const int CONFIG[] = {5,18,24,85,95,10000,10,16}; // General
+const int CONFIG[] = {5,18,24,85,95,10000,10,16}; // Martha
 // const int CONFIG[] = {6,13,17,85,95,10000,10,16}; // Reishi
-const String TUBID = "M"; // ensure this matches the tub that you're deploying to
+const String TUBID = "1"; // ensure this matches the tub that you're deploying to
+const char* HEADMSG = "-= Martha 01 =-";
 // ###
 
 // ### PRODUCTION CODE BELOW HERE
-
 Adafruit_CCS811 ccs;
 DHT dht(DHTPIN, DHTTYPE);
+U8GLIB_SH1106_128X64 u8g(SCKPIN, MOSIPIN, CSPIN, A0PIN); // SCK = 13, MOSI = 11, CS = 10, A0 = 9
+float oledtmp = -1.0;
+float oledhum = -1.0;
+float oledco2 = -1.0;
+float oledvoc = -1.0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
   // initialize digital I/O
-  pinMode(RELAYPIN1, OUTPUT);
-  pinMode(RELAYPIN2, OUTPUT);
-  pinMode(RELAYPIN3, OUTPUT);
-  pinMode(RELAYPIN4, OUTPUT);
+  pinMode(RELAYPIN, OUTPUT);
   pinMode(FANPWMPIN, OUTPUT);
   // serial comm
   Serial.begin(9600);
@@ -59,12 +65,25 @@ void setup() {
   //analogWrite(FANPWMPIN,255);
   //delay(1000);
   analogWrite(FANPWMPIN,0);
-  digitalWrite(RELAYPIN1, LOW);
-  digitalWrite(RELAYPIN2, LOW);
-  digitalWrite(RELAYPIN3, LOW);
-  digitalWrite(RELAYPIN4, LOW);
+  digitalWrite(RELAYPIN, LOW);
+  
   // init the sensors
-  dht.begin();
+  if (ENABLEOLED) {
+    u8g.setRot180();
+    if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
+      u8g.setColorIndex(255); // white
+    } else if ( u8g.getMode() == U8G_MODE_GRAY2BIT ) {
+      u8g.setColorIndex(3); // max intensity
+    } else if ( u8g.getMode() == U8G_MODE_BW ) {
+      u8g.setColorIndex(1); // pixel on
+    } else if ( u8g.getMode() == U8G_MODE_HICOLOR ) {
+      u8g.setHiColorByRGB(255,255,255);
+    }
+    u8g.setFont(u8g_font_unifont);
+  }
+  if (ENABLEDHT) {
+    dht.begin();
+  }
   if (ENABLECO2) {
     if(!ccs.begin()){
       Serial.println("FATAL: Failed to start CO2 sensor - check wiring");
@@ -79,6 +98,13 @@ void setup() {
 void loop() {
   delay(IODELAY);
   
+  if (ENABLEOLED) {
+    u8g.firstPage();
+    do {
+      draw();
+    } while (u8g.nextPage());
+  }
+  
   // Identifying Info
   Serial.print("|Tub:" + TUBID + "|Type:" + TUBTYPE[CONFIG[0]]);
 
@@ -88,30 +114,38 @@ void loop() {
       if(!ccs.readData()){
         Serial.print("|CO2:");
         Serial.print(ccs.geteCO2());
+        oledco2 = ccs.geteCO2();
         Serial.print("|TVOC:");
         Serial.print(ccs.getTVOC());
+        oledvoc = ccs.getTVOC();
         Serial.print("|ChkTemp:");
         Serial.print((ccs.calculateTemperature() - 32) * 5 / 9);
       }
       else{
         Serial.print("|WARN:CCS811-FAIL");
+        oledco2 = -1.0;
+        oledvoc = -1.0;
       }
     }
   } else {
-    Serial.print(F("|CO2/VOC:NC"));
+    Serial.print(F("|CCS811:NC"));
   }
 
   // Temp and Humidity - takes about 250ms and may be up to 2s old
-  float h = dht.readHumidity(); // in % RH
-  float t = dht.readTemperature(); // deg C
-
-  if (isnan(h) || isnan(t)) {
-    Serial.print(F("|WARN: DHT sensor fail"));
+  if (ENABLEDHT) {
+    float h = dht.readHumidity(); // in % RH
+    float t = dht.readTemperature(); // deg C
+  
+    if (isnan(h) || isnan(t)) {
+      Serial.print(F("|WARN: DHT sensor fail"));
+    } else {
+      Serial.print(F("|Humi:"));
+      Serial.print(h);
+      Serial.print(F("|Temp:"));
+      Serial.print(t);
+    }
   } else {
-    Serial.print(F("|Humi:"));
-    Serial.print(h);
-    Serial.print(F("|Temp:"));
-    Serial.print(t);
+    Serial.print(F("|DHT:NC")); 
   }
 
   if (ENABLEFAN) {
@@ -121,7 +155,7 @@ void loop() {
     Serial.print(F("|FAEFan:"));
     Serial.print(FANPWM);
   } else {
-    Serial.print(F("|FAEFan:NC"));
+    Serial.print(F("|FAN:NC"));
   }
   
 
@@ -129,14 +163,29 @@ void loop() {
     // Oscillate the valve for now
     // irrigation
     RELAYON = !RELAYON;
-    digitalWrite(RELAYPIN2, RELAYON);
+    digitalWrite(RELAYPIN, RELAYON);
     Serial.print(F("|RELAYON:"));
     Serial.print(RELAYON);
   } else {
     Serial.print(F("|RELAY:NC"));
   }
   
-
   // Fin
   Serial.println(F("|"));
+}
+
+void draw(void) {
+  u8g.drawStr(0,10,HEADMSG);
+  u8g.drawStr(0,23,"TMP:        ");
+  u8g.setPrintPos(36,23);
+  u8g.print(oledtmp);
+  u8g.drawStr(0,36,"%RH:        ");
+  u8g.setPrintPos(36,36);
+  u8g.print(oledhum);
+  u8g.drawStr(0,49,"CO2:        ");
+  u8g.setPrintPos(36,49);
+  u8g.print(oledco2);
+  u8g.drawStr(0,62,"VOC:        ");
+  u8g.setPrintPos(36,62);
+  u8g.print(oledvoc);
 }

@@ -10,7 +10,6 @@ const int RELAYPIN1 = 12; // Relay pin IN1
 const int RELAYPIN2 = 11; // Relay pin IN2 - 24VAC irrigation
 const int RELAYPIN3 = 10; // Relay pin
 const int RELAYPIN4 = 9; // Relay pin
-const bool ENABLERELAY = false; // do we run the relay code
 bool RELAYON = false; // used for debugging to flip relay state
 const int DHTPIN = 8; // Digital pin connected to the DHT sensor
 const int FANPWMPIN = 6; // PWM pin to control a 3-pin FAE case fan
@@ -21,20 +20,24 @@ const int TEMPTUNEF = 32; // Tuning for CO2 sensor temp
 const int IODELAY = 5000; // delay between sensor readings in ms
 int FANPWM = 0; // value 0-255 to send to FAE Fan PWM
 const bool ENABLEFAN = false; // do we run the FAE fan code
+const bool ENABLERELAY = false; // do we run the relay code
+const bool ENABLECO2 = false; // do we run the CO2/VOC sensor code
 // ###
 
 // ### RARELY CHANGED IN PRODUCTION
-const char *TUBTYPE[] = {"Nameko","KingOyster","Shiitake","LionsMane","GardenGiant","Other"};
+const char *TUBTYPE[] = {"Nameko","KingOyster","Shiitake","LionsMane","GardenGiant","General","Reishi"};
 // ###
 
 // ### POTENTIALLY CHANGE FOR EACH TUB AS CAKES ARE BIRTHED AND GROW PARAMS ARE TUNED
 // choose 1 grow CONFIG: TubType, MinTemp, MaxTemp, MinHumi, MaxHumi, MaxCO2, LightOn, LightOff
 // const int CONFIG[] = {0,13,17,85,95,10000,10,16}; // Nameko
 // const int CONFIG[] = {1,13,17,85,95,10000,10,16}; // King Oyster
-const int CONFIG[] = {2,13,17,85,95,10000,10,16}; // Shiitake
+// const int CONFIG[] = {2,13,17,85,95,10000,10,16}; // Shiitake
 // const int CONFIG[] = {3,13,17,85,95,10000,10,16}; // Lions Mane
 // const int CONFIG[] = {4,13,17,85,95,10000,10,16}; // Garden Giant
-const String TUBID = "A"; // ensure this matches the tub that you're deploying to
+const int CONFIG[] = {5,18,24,85,95,10000,10,16}; // General
+// const int CONFIG[] = {6,13,17,85,95,10000,10,16}; // Reishi
+const String TUBID = "M"; // ensure this matches the tub that you're deploying to
 // ###
 
 // ### PRODUCTION CODE BELOW HERE
@@ -62,13 +65,15 @@ void setup() {
   digitalWrite(RELAYPIN4, LOW);
   // init the sensors
   dht.begin();
-  if(!ccs.begin()){
-    Serial.println("FATAL: Failed to start CO2 sensor - check wiring");
-    while(1);
+  if (ENABLECO2) {
+    if(!ccs.begin()){
+      Serial.println("FATAL: Failed to start CO2 sensor - check wiring");
+      while(1);
+    }
+    // Wait for the sensors to be ready
+    while(!ccs.available());
+    ccs.setTempOffset(TEMPTUNEF);
   }
-  // Wait for the sensors to be ready
-  while(!ccs.available());
-  ccs.setTempOffset(TEMPTUNEF);
 }
 
 void loop() {
@@ -78,18 +83,22 @@ void loop() {
   Serial.print("|Tub:" + TUBID + "|Type:" + TUBTYPE[CONFIG[0]]);
 
   // CO2, TVOC and Check Temp
-  if(ccs.available()){
-    if(!ccs.readData()){
-      Serial.print("|CO2:");
-      Serial.print(ccs.geteCO2());
-      Serial.print("|TVOC:");
-      Serial.print(ccs.getTVOC());
-      Serial.print("|ChkTemp:");
-      Serial.print((ccs.calculateTemperature() - 32) * 5 / 9);
+  if (ENABLECO2) {
+    if(ccs.available()){
+      if(!ccs.readData()){
+        Serial.print("|CO2:");
+        Serial.print(ccs.geteCO2());
+        Serial.print("|TVOC:");
+        Serial.print(ccs.getTVOC());
+        Serial.print("|ChkTemp:");
+        Serial.print((ccs.calculateTemperature() - 32) * 5 / 9);
+      }
+      else{
+        Serial.print("|WARN:CCS811-FAIL");
+      }
     }
-    else{
-      Serial.print("|WARN: CCS811 sensor fail");
-    }
+  } else {
+    Serial.print(F("|CO2/VOC:NC"));
   }
 
   // Temp and Humidity - takes about 250ms and may be up to 2s old
@@ -109,18 +118,24 @@ void loop() {
     // Oscillate the fan for now
     FANPWM = (FANPWM == 0) ? 255 : 0;
     analogWrite(FANPWMPIN,FANPWM);
+    Serial.print(F("|FAEFan:"));
+    Serial.print(FANPWM);
+  } else {
+    Serial.print(F("|FAEFan:NC"));
   }
-  Serial.print(F("|FAEFan:"));
-  Serial.print(FANPWM);
+  
 
   if (ENABLERELAY) {
     // Oscillate the valve for now
     // irrigation
     RELAYON = !RELAYON;
     digitalWrite(RELAYPIN2, RELAYON);
+    Serial.print(F("|RELAYON:"));
+    Serial.print(RELAYON);
+  } else {
+    Serial.print(F("|RELAY:NC"));
   }
-  Serial.print(F("|RELAYON:"));
-  Serial.print(RELAYON);
+  
 
   // Fin
   Serial.println(F("|"));

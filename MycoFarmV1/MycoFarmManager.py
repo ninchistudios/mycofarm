@@ -56,7 +56,7 @@ if __name__ == '__main__':
                     aio.append(mhumi.key,h)
                     if (h > 94.5):
                         requests.post(IFTTT_HUMI_OFF,eparms)
-                    elif (h < 90.0):
+                    elif (h < 92.0):
                         requests.post(IFTTT_HUMI_ON,eparms)
                 if (pair.find('TVOC:') > -1):
                     v = float(pair[5:])

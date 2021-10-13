@@ -139,8 +139,10 @@ void loop() {
     } else {
       Serial.print(F("|Humi:"));
       Serial.print(h);
+      oledhum = h;
       Serial.print(F("|Temp:"));
       Serial.print(t);
+      oledtmp = t;
     }
   } else {
     Serial.print(F("|DHT:NC")); 

@@ -19,12 +19,12 @@ const char DHTTYPE = DHT11; // DHT 11
 // const char DHTTYPE = DHT22; // DHT 22  (AM2302), AM2321
 // const char DHTTYPE = DHT21; // DHT 21 (AM2301)
 const int TEMPTUNEF = 32; // Tuning for CO2 sensor temp
-const int IODELAY = 5000; // delay between sensor readings in ms
+const int IODELAY = 20000; // delay between sensor readings in ms
 int FANPWM = 0; // value 0-255 to send to FAE Fan PWM
 const bool ENABLEFAN = false; // do we run the FAE fan code
 const bool ENABLERELAY = false; // do we run the relay code
 const bool ENABLECO2 = true; // do we run the CO2/VOC sensor code
-const bool ENABLEDHT = false; // do we run the DHT temp/pressure sensor code
+const bool ENABLEDHT = true; // do we run the DHT temp/pressure sensor code
 const bool ENABLEOLED = true; // do we run the OLED display
 // ###
 
@@ -96,8 +96,6 @@ void setup() {
 }
 
 void loop() {
-  delay(IODELAY);
-  
   if (ENABLEOLED) {
     u8g.firstPage();
     do {
@@ -113,12 +111,12 @@ void loop() {
     if(ccs.available()){
       if(!ccs.readData()){
         Serial.print("|CO2:");
-        Serial.print(ccs.geteCO2());
         oledco2 = ccs.geteCO2();
+        Serial.print(oledco2);
         Serial.print("|TVOC:");
-        Serial.print(ccs.getTVOC());
         oledvoc = ccs.getTVOC();
-        Serial.print("|ChkTemp:");
+        Serial.print(oledvoc);
+        Serial.print("|ChkT:");
         Serial.print((ccs.calculateTemperature() - 32) * 5 / 9);
       }
       else{
@@ -172,6 +170,8 @@ void loop() {
   
   // Fin
   Serial.println(F("|"));
+
+  delay(IODELAY);
 }
 
 void draw(void) {

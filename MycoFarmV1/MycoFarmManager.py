@@ -22,13 +22,23 @@ if __name__ == '__main__':
     except RequestError:
         hfeed = Feed(name="mhumi")
         mhumi = aio.create_feed(hfeed)
+    try:
+        mco2 = aio.feeds('mco2')
+    except RequestError:
+        cfeed = Feed(name="mco2")
+        mco2 = aio.create_feed(cfeed)
+    try:
+        mvoc = aio.feeds('mvoc')
+    except RequestError:
+        vfeed = Feed(name="mvoc")
+        mvoc = aio.create_feed(vfeed)
 
-    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+    ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
     ser.flush()
     while True:
         if ser.in_waiting > 0:
             line = ser.readline().decode('utf-8').rstrip()
-            # print(line)
+            print(line)
             pairs = line.split('|')
             for pair in pairs:
                 # print(pair)
@@ -40,4 +50,11 @@ if __name__ == '__main__':
                     h = float(pair[5:])
                     # print(h)
                     aio.append(mhumi.key,h)
-
+                if (pair.find('TVOC:') > -1):
+                    v = float(pair[5:])
+                    # print(h)
+                    aio.append(mvoc.key,v)
+                if (pair.find('CO2:') > -1):
+                    c = float(pair[4:])
+                    # print(h)
+                    aio.append(mco2.key,c)

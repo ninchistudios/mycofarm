@@ -15,6 +15,7 @@ const int SCKPIN = 13; // OLED SCK
 const int MOSIPIN = 11; // OLED MOSI
 const int CSPIN = 10; // OLED CS
 const int A0PIN = 9; // OLED A0
+const int CO2RSTPIN = 7; // CCS811 reset pin - pull low to reset
 const char DHTTYPE = DHT11; // DHT 11
 // const char DHTTYPE = DHT22; // DHT 22  (AM2302), AM2321
 // const char DHTTYPE = DHT21; // DHT 21 (AM2301)
@@ -59,6 +60,7 @@ void setup() {
   // initialize digital I/O
   pinMode(RELAYPIN, OUTPUT);
   pinMode(FANPWMPIN, OUTPUT);
+  pinMode(CO2RSTPIN, OUTPUT);
   // serial comm
   Serial.begin(9600);
   Serial.println(F("MycoFarm Init"));
@@ -66,6 +68,7 @@ void setup() {
   //delay(1000);
   analogWrite(FANPWMPIN,0);
   digitalWrite(RELAYPIN, LOW);
+  digitalWrite(CO2RSTPIN,HIGH);
   
   // init the sensors
   if (ENABLEOLED) {
@@ -108,8 +111,8 @@ void loop() {
 
   // CO2, TVOC and Check Temp
   if (ENABLECO2) {
-    if(ccs.available()){
-      if(!ccs.readData()){
+    if(ccs.available()) {
+      if(!ccs.readData()) {
         Serial.print("|CO2:");
         oledco2 = ccs.geteCO2();
         Serial.print(oledco2);
@@ -118,11 +121,13 @@ void loop() {
         Serial.print(oledvoc);
         Serial.print("|ChkT:");
         Serial.print((ccs.calculateTemperature() - 32) * 5 / 9);
-      }
-      else{
+      } else {
         Serial.print("|WARN:CCS811-FAIL");
         oledco2 = -1.0;
         oledvoc = -1.0;
+        digitalWrite(CO2RSTPIN,LOW);
+        delay(100);
+        digitalWrite(CO2RSTPIN,HIGH);
       }
     }
   } else {

@@ -5,6 +5,7 @@
 #include "DHT.h" // Adafruit Temp & Humidity sensor library
 #include "Adafruit_CCS811.h" // Adafruit CCS811 eCO2/TVOC sensor library
 #include "U8glib.h" // OLED display library
+#include "Wire.h" // I2C experimental to fix issues
 
 // ### NO NEED TO CHANGE THESE IN PRODUCTION
 const int RELAYPIN = 12; // Relay pin IN1 - 24VAC irrigation
@@ -24,7 +25,7 @@ const int IODELAY = 20000; // delay between sensor readings in ms
 int FANPWM = 0; // value 0-255 to send to FAE Fan PWM
 const bool ENABLEFAN = false; // do we run the FAE fan code
 const bool ENABLERELAY = false; // do we run the relay code
-const bool ENABLECO2 = true; // do we run the CO2/VOC sensor code
+bool ENABLECO2 = true; // do we run the CO2/VOC sensor code
 const bool ENABLEDHT = true; // do we run the DHT temp/pressure sensor code
 const bool ENABLEOLED = true; // do we run the OLED display
 // ###
@@ -90,8 +91,10 @@ void setup() {
   if (ENABLECO2) {
     if(!ccs.begin()){
       Serial.println("FATAL: Failed to start CO2 sensor - check wiring");
-      while(1);
+      ENABLECO2 = false;
     }
+  }
+  if (ENABLECO2) {
     // Wait for the sensors to be ready
     while(!ccs.available());
     ccs.setTempOffset(TEMPTUNEF);

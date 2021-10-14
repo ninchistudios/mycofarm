@@ -5,6 +5,7 @@
 # sudo systemctl start|stop mycofarmmanager
 
 import os
+import time
 import serial
 from Adafruit_IO import Client, Feed, Data, RequestError
 from decouple import config
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
     ser.flush()
     while True:
+        time.sleep(1)
         if ser.in_waiting > 0:
             line = ser.readline().decode('utf-8').rstrip()
             print(line)

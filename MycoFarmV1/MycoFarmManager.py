@@ -18,6 +18,8 @@ if __name__ == '__main__':
     IFTTT_HUMI_OFF = config('IFTTT_HUMI_OFF')
     IFTTT_HUMI_ON = config('IFTTT_HUMI_ON')
     eparms = {}
+    lowhcount = 0
+    highhcount = 0
     try:
         mtemp = aio.feeds('mtemp')
     except RequestError:
@@ -55,12 +57,23 @@ if __name__ == '__main__':
                     h = float(pair[5:])
                     aio.append(mhumi.key,h)
                     if (h > 94.5):
-                        requests.post(IFTTT_HUMI_OFF,eparms)
+                        highhcount += 1
+                        lowhcount = 0
+                        if (highhcount > 2):
+                            requests.post(IFTTT_HUMI_OFF,eparms)
                     elif (h < 92.0):
-                        requests.post(IFTTT_HUMI_ON,eparms)
+                        lowhcount += 1
+                        highhcount = 0
+                        if (lowhcount > 2):
+                            requests.post(IFTTT_HUMI_ON,eparms)
+                    else:
+                        lowhcount = 0
+                        highhcount = 0
                 if (pair.find('TVOC:') > -1):
                     v = float(pair[5:])
                     aio.append(mvoc.key,v)
                 if (pair.find('CO2:') > -1):
                     c = float(pair[4:])
                     aio.append(mco2.key,c)
+            # print(highhcount)
+            # print(lowhcount)

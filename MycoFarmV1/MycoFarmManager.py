@@ -63,7 +63,7 @@ if __name__ == '__main__':
                         lowhcount = 0
                         if (highhcount > 2):
                             requests.post(IFTTT_HUMI_OFF,eparms)
-                    elif (h < 94.0):
+                    elif (h < 94.9):
                         lowhcount += 1
                         highhcount = 0
                         if (lowhcount > 2):

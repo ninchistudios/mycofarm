@@ -58,12 +58,12 @@ if __name__ == '__main__':
                 if (pair.find('Humi:') > -1):
                     h = float(pair[5:])
                     aio.append(mhumi.key,h)
-                    if (h > 96.0):
+                    if (h > 95.0):
                         highhcount += 1
                         lowhcount = 0
                         if (highhcount > 2):
                             requests.post(IFTTT_HUMI_OFF,eparms)
-                    elif (h < 95.0):
+                    elif (h < 91.0):
                         lowhcount += 1
                         highhcount = 0
                         if (lowhcount > 2):

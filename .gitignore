@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Local agent notes (not published)
+AGENTS.md
+CLAUDE.md
